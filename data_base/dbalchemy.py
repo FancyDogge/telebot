@@ -1,19 +1,19 @@
 from os import path
 from datetime import datetime
-
 # ф-ция для создания объекта подключения к бд
 from sqlalchemy import create_engine
 # все операции с базой выполняются через сессию, создает сессию
 from sqlalchemy.orm import sessionmaker
 # базовый класс, необходим для переноса всех изменений в моделях на структуру таблиц в бд
 from data_base.dbcore import Base
-from settings import utility
 
+from settings import utility
 # конфиг с константами для бд
 from settings import config
 # собственно модель продуктов
 from models.product import Products
 from models.order import Order
+
 
 class Singleton(type):
     """
@@ -33,33 +33,19 @@ class Singleton(type):
 
 class DBManager(metaclass=Singleton):
     """ 
-    Класс-менеджер для работы с БД
+    Класс менеджер для работы с БД 
     """
 
     def __init__(self):
         """
-        Инициализация сесии и подключения к БД
+        Инициализация сессии и подключения к БД
         """
-        # подключение к бд. config.DATABASE - путь до бд
         self.engine = create_engine(config.DATABASE)
-        # создаем класс сессии
         session = sessionmaker(bind=self.engine)
-        # создаем объект сессии
         self._session = session()
-        # если структуры базы данных нету
         if not path.isfile(config.DATABASE):
-            # создаем все как в джанго с makemigrations-migrate
-            # эта база должна объединять все модели сразу как с dbcore.py
-            # иначе все скорее всего в сломанном порядке создатся
             Base.metadata.create_all(self.engine)
 
-    def close(self):
-        """
-        Закрывает сесию
-        """
-        self._session.close()
-
-    # принимает категорию и возвращает все товары относящиеся к ней
     def select_all_products_category(self, category):
         """
         Возвращает все товары категории
@@ -69,6 +55,10 @@ class DBManager(metaclass=Singleton):
 
         self.close()
         return result
+
+    def close(self):
+        """ Закрывает сесию """
+        self._session.close()
 
     # Работа с заказом
     def _add_orders(self, quantity, product_id, user_id,):
@@ -99,7 +89,6 @@ class DBManager(metaclass=Singleton):
         self._session.commit()
         self.close()
 
-    # конвертирует список с p[(5,),(8,),...] к [5,8,...]
     def select_all_product_id(self):
         """
         Возвращает все id товара в заказе
@@ -141,7 +130,7 @@ class DBManager(metaclass=Singleton):
 
     def update_order_value(self, product_id, name, value):
         """
-        Обновляет данные указанной позиции заказа
+        Обновляет количество товара на складе
         в соответствии с номером товара - rownum
         """
         self._session.query(Order).filter_by(
@@ -193,3 +182,30 @@ class DBManager(metaclass=Singleton):
             product_id=product_id).one()
         self.close()
         return result.quantity
+
+    def delete_order(self, product_id):
+        """
+        Удаляет товар из заказа
+        """
+        self._session.query(Order).filter_by(product_id=product_id).delete()
+        self._session.commit()
+        self.close()
+
+    def delete_all_order(self):
+        """
+        Удаляет данные всего заказа
+        """
+        all_id_orders = self.select_all_order_id()
+
+        for itm in all_id_orders:
+            self._session.query(Order).filter_by(id=itm).delete()
+            self._session.commit()
+        self.close()
+
+    def select_all_order_id(self):
+        """
+        Возвращает все id заказа
+        """
+        result = self._session.query(Order.id).all()
+        self.close()
+        return utility._convert(result)

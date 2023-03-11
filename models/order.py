@@ -17,10 +17,8 @@ class Order(Base):
     Класс для создания таблицы "Заказ",
     основан на декларативном стиле SQLAlchemy
     """
-    # название таблицы
     __tablename__ = 'orders'
 
-    # поля таблицы
     id = Column(Integer, primary_key=True)
     quantity = Column(Integer)
     data = Column(DateTime)

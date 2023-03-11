@@ -14,10 +14,8 @@ class Category(Base):
     Класс-модель для описания таблицы "Категория товара",
     основан на декларативном стиле SQLAlchemy
     """
-    # название таблицы
     __tablename__ = 'category'
 
-    # поля таблицы
     id = Column(Integer, primary_key=True)
     name = Column(String, index=True)
     is_active = Column(Boolean)

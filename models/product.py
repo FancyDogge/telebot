@@ -17,10 +17,8 @@ class Products(Base):
     Класс для создания таблицы "Товар",
     основан на декларативном стиле SQLAlchemy
     """
-    # название таблицы
     __tablename__ = 'products'
 
-    # поля таблицы
     id = Column(Integer, primary_key=True)
     name = Column(String, index=True)
     title = Column(String)
